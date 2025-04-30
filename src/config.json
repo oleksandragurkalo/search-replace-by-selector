@@ -1,0 +1,11 @@
+{
+  "excludedFolders": [
+    "fusion"
+  ],
+  "textFileExtensions": [
+    ".html",
+    ".css",
+    ".js",
+    ".json"
+  ]
+}

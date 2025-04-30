@@ -1,0 +1,27 @@
+[
+  {
+    "selector": "",
+    "searchValue": "#000000",
+    "replaceValue": "#ffffff"
+  },
+  {
+    "selector": ".highlight",
+    "searchValue": "Important text",
+    "replaceValue": "Updated text"
+  },
+  {
+    "selector": "[data-theme=\"dark\"]",
+    "searchValue": "#111111",
+    "replaceValue": "#eeeeee"
+  },
+  {
+    "selector": "",
+    "searchValue": "var(--primary-color)",
+    "replaceValue": "var(--accent-color)"
+  },
+  {
+    "selector": "body",
+    "searchValue": "margin: 0;",
+    "replaceValue": "margin: 10px;"
+  }
+]

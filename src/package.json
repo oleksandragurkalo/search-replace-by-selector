@@ -1,0 +1,18 @@
+{
+  "name": "search-replace-by-selector",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "start search-replace-by-selector": "node utils/convertExcelToJSON.js && node utils/copyFiles.js && node utils/replaceInFiles.js"
+  },
+  "private": true,
+  "dependencies": {
+    "cheerio": "^1.0.0",
+    "fs-extra": "^11.2.0",
+    "path": "^0.12.7",
+    "playwright": "^1.48.2",
+    "sharp": "^0.33.5",
+    "xlsx": "^0.18.5"
+  }
+}
