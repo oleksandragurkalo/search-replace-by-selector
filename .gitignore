@@ -7,7 +7,6 @@
 node_modules/
 dist/
 export/
-entry/
 
 # Compiled Java class files
 *.class
