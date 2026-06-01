@@ -35,14 +35,16 @@ async function applySelectorReplacements(content, mutations) {
   const $ = cheerio.load(content);
 
   mutations.forEach(mutation => {
-    const element = $(mutation.selector);
-    const string = element.prop('outerHTML');
+    const elements = $(mutation.selector);
 
-    if (string) {
+    elements.each((index, element) => {
+      let elementString = $.html(element);
+
       const regex = createFlexibleRegex(mutation.searchValue);
-      const updatedString = string.replace(regex, mutation.replaceValue);
-      element.replaceWith(updatedString);
-    }
+      elementString = elementString.replace(regex, mutation.replaceValue);
+
+      $(element).replaceWith(elementString);
+    });
   });
 
   return $.html();
