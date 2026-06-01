@@ -1,6 +1,14 @@
-# Search-Replace-By-Selector Script
+# Search-Replace-By-Selector
 
-This script supports targeted replacements of HTML elements with specified search-and-replace values, creating customized template variations in bulk.
+A Node.js CLI tool for bulk search-and-replace in HTML/CSS/JS files
+using CSS selectors. Designed to automate template customization across
+multiple branded variations - eliminating repetitive manual edits and
+significantly reducing delivery time.
+
+## Use Case
+When working with multiple branded HTML templates that share the same
+structure but differ in styles and content, this tool allows you to define
+all changes in a single Excel file and apply them across all files at once.
 
 ## Setup Instructions
 
