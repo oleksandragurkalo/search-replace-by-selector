@@ -1,51 +1,109 @@
-# Search-Replace-By-Selector
+# Search-Replace-by-Selector
 
-A Node.js CLI tool for bulk search-and-replace in HTML/CSS/JS files
-using CSS selectors. Designed to automate template customization across
-multiple branded variations - eliminating repetitive manual edits and
-significantly reducing delivery time.
+A Node.js CLI tool for bulk, selector-targeted find-and-replace across HTML/CSS/JS files.
 
-## Use Case
-When working with multiple branded HTML templates that share the same
-structure but differ in styles and content, this tool allows you to define
-all changes in a single Excel file and apply them across all files at once.
+Built to solve a real production problem: when maintaining 20+ pharmaceutical eDetailer
+templates, small brand updates (colours, copy, font sizes) needed to be applied across
+hundreds of files consistently and without breaking unrelated elements. A global find-replace
+was too blunt. This tool lets you target changes by CSS selector — so `h2.brand-title` gets
+one change while `h2.disclaimer` stays untouched.
 
-## Setup Instructions
+## What it does
 
-1. **Prepare the `search-map.xlsx` File**:
-    - Add the styles and content changes to be applied by filling out the `search-map.xlsx` table.
-    - **Columns**:
-        - `selector` (CSS selector): Specify a CSS selector for targeted changes. Leave empty if the change should apply globally.
-        - `searchValue`: The current text or style to be found in the template.
-        - `replaceValue`: The new text or style to replace `searchValue` with.
+1. Reads a replacement map from `data/search-map.xlsx` (selector → find → replace)
+2. Copies source files from `entry/` to `export/`
+3. Applies global (non-selector) replacements across every configured file type
+4. Applies CSS-selector-scoped replacements within `.html` files only — a row with a
+   `selector` is matched against the HTML DOM (via Cheerio) and only replaces text
+   inside matching elements. Rows without a selector run as a plain find/replace
+   across every configured extension.
 
-2. **Configuration Options** (`config.json`):
-    - **`excludedFolders`**: Specify any folder names that should be ignored during processing.
-    - **`textFileExtensions`**:
-      ```json
-      [
-        ".html",
-        ".css",
-        ".js",
-        ".json"
-      ]
-      ```
-      Add or remove file types to control which files should be processed.
+## Result
 
-3. **Project Folders**:
-    - Place the folder with files where replacement is needed in the `entry` folder.
-    - Processed files will be saved in the `export` folder.
+Reduced per-project delivery time from ~27 hours to 6–7 hours across 30+ projects.
 
-## Commands
+## Setup
 
-Only 1 command is needed to execute the entire script:
+### 1. Fill in `data/search-map.xlsx`
 
-```bash
-npm run start search-replace-by-selector
+| Column | Description |
+|--------|-------------|
+| `selector` | CSS selector to scope the change to `.html` files. Leave empty to apply globally across all configured file types. |
+| `searchValue` | The current value to find |
+| `replaceValue` | The replacement value |
+
+**Example:**
+
+| selector | searchValue | replaceValue |
+|----------|-------------|--------------|
+| `h1.hero-title` | `Product Name` | `Kesimpta` |
+| `.brand-color` | `#0066CC` | `#E8340A` |
+| _(empty)_ | `2023` | `2024` |
+
+> Selectors only take effect in `.html` files. Rows without a selector apply as a
+> plain find/replace across every configured extension.
+
+### 2. Configure `config.json` (optional)
+
+```json
+{
+  "excludedFolders": ["node_modules", ".git"],
+  "textFileExtensions": [".html", ".css", ".js", ".json"]
+}
 ```
 
-Which sequentially runs:
+### 3. Place your files
+
+- Source files → `entry/` folder
+- Processed output → `export/` folder (auto-created, overwritten on every run)
+
+## Run
 
 ```bash
-node utils/convertExcelToJSON.js && node utils/copyFiles.js && node utils/replaceInFiles.js
+npm start
 ```
+
+That's it. One command runs the full pipeline:
+
+```
+convertExcelToJSON → copyFiles → replaceInFiles
+```
+
+### Preview before you run (report mode)
+
+```bash
+npm run report
+```
+
+Runs the same pipeline but writes nothing — it only prints a per-row report of
+how many matches each `search-map.xlsx` row found, and flags rows with zero
+matches. Every `start` run also prints this report after writing, so you can
+catch a typo'd selector or stale `searchValue` immediately:
+
+```
+=== Replacement report ===
+  1. [global] "#000000" → "#ffffff": 3 match(es) in 3 file(s)
+  2. [selector ".highlight"] "Important text" → "Updated text": 1 match(es) in 1 file(s)
+  5. [selector "body"] "margin: 0;" → "margin: 10px;": 0 match(es) in 0 file(s)  ⚠ no matches
+
+⚠ 1 rule(s) matched elements/files but found no searchValue to replace:
+  Row 5: "margin: 0;"
+```
+
+## Known limitations
+
+- CSS-selector scoping only works for `.html` files; `.css`/`.js`/`.json` support
+  unscoped literal/regex find-replace only (leave `selector` empty for those rows).
+- A `searchValue` containing regex metacharacters (`.`, `*`, `(`, etc.) is treated
+  as a regular expression rather than a literal string — double-check rows with
+  punctuation-heavy values.
+
+## Tech
+
+Node.js · no framework dependencies · Excel parsing via `xlsx` · HTML parsing via `cheerio`
+
+## Use case context
+
+Originally built for Veeva CRM eDetailer maintenance — multi-brand pharmaceutical
+digital content where each brand variant shares a template but requires dozens of
+targeted overrides. Generalised for any HTML/CSS project with similar bulk-update needs.

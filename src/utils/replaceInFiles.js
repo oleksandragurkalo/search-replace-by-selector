@@ -5,6 +5,11 @@ const config = require('../config.json');
 const mutations = require('../data/search-map.json');
 
 const exportDir = path.join(__dirname, '../export');
+const isDryRun = process.argv.includes('--dry-run');
+
+// Tracks how many times each search-map row actually fired, so unused/typo'd
+// rows (0 matches) surface in the report instead of failing silently.
+const stats = new Map(mutations.map(mutation => [mutation, { matches: 0, elements: 0, files: new Set() }]));
 
 function isRegexPattern(string) {
   const regexChars = /[.*+?^${}|[\]\\]/;
@@ -21,29 +26,59 @@ function createFlexibleRegex(searchString) {
 }
 
 // Function to process non-selector-based replacements
-async function applyGlobalReplacements(content, mutations) {
+async function applyGlobalReplacements(content, mutations, filePath) {
   let updatedContent = content;
   mutations.forEach(mutation => {
     const regex = createFlexibleRegex(mutation.searchValue);
-    updatedContent = updatedContent.replace(regex, mutation.replaceValue);
+    const stat = stats.get(mutation);
+    updatedContent = updatedContent.replace(regex, () => {
+      stat.matches += 1;
+      stat.files.add(filePath);
+      return mutation.replaceValue;
+    });
   });
   return updatedContent;
 }
 
+// Recursively replaces matches in a node's own attributes/text and its descendants,
+// mutating in place so structural tags (html/head/body) are never re-parsed/re-inserted.
+function applyRegexToNode(node, regex, replaceValue, stat, filePath) {
+  if (node.type === 'text') {
+    node.data = node.data.replace(regex, () => {
+      stat.matches += 1;
+      stat.files.add(filePath);
+      return replaceValue;
+    });
+    return;
+  }
+
+  if (node.attribs) {
+    Object.keys(node.attribs).forEach(attr => {
+      node.attribs[attr] = node.attribs[attr].replace(regex, () => {
+        stat.matches += 1;
+        stat.files.add(filePath);
+        return replaceValue;
+      });
+    });
+  }
+
+  if (node.children) {
+    node.children.forEach(child => applyRegexToNode(child, regex, replaceValue, stat, filePath));
+  }
+}
+
 // Function to process selector-based replacements for HTML files
-async function applySelectorReplacements(content, mutations) {
+async function applySelectorReplacements(content, mutations, filePath) {
   const $ = cheerio.load(content);
 
   mutations.forEach(mutation => {
     const elements = $(mutation.selector);
+    const regex = createFlexibleRegex(mutation.searchValue);
+    const stat = stats.get(mutation);
+    stat.elements += elements.length;
 
     elements.each((index, element) => {
-      let elementString = $.html(element);
-
-      const regex = createFlexibleRegex(mutation.searchValue);
-      elementString = elementString.replace(regex, mutation.replaceValue);
-
-      $(element).replaceWith(elementString);
+      applyRegexToNode(element, regex, mutation.replaceValue, stat, filePath);
     });
   });
 
@@ -62,14 +97,16 @@ async function replaceInFile(currentFilePath) {
   const globalMutations = mutations.filter(mutation => !mutation.selector);
   const selectorMutations = mutations.filter(mutation => mutation.selector);
 
-  updatedContent = await applyGlobalReplacements(updatedContent, globalMutations);
+  updatedContent = await applyGlobalReplacements(updatedContent, globalMutations, currentFilePath);
 
   if (selectorMutations.length > 0 && ext === '.html') {
-    updatedContent = await applySelectorReplacements(updatedContent, selectorMutations);
+    updatedContent = await applySelectorReplacements(updatedContent, selectorMutations, currentFilePath);
   }
 
-  await fs.writeFile(currentFilePath, updatedContent, 'utf-8');
-  console.log(`Updated file: ${currentFilePath}`);
+  if (!isDryRun) {
+    await fs.writeFile(currentFilePath, updatedContent, 'utf-8');
+  }
+  console.log(`${isDryRun ? '[dry run] Would update' : 'Updated file'}: ${currentFilePath}`);
 }
 
 async function processFiles(dir) {
@@ -94,10 +131,37 @@ async function processFiles(dir) {
   }
 }
 
+function printReport() {
+  const rows = mutations.map((mutation, index) => ({ index: index + 1, mutation, stat: stats.get(mutation) }));
+  const zeroMatchRows = rows.filter(({ mutation, stat }) => stat.matches === 0 && !(mutation.selector && stat.elements === 0));
+  const zeroElementRows = rows.filter(({ mutation, stat }) => mutation.selector && stat.elements === 0);
+
+  console.log(`\n${isDryRun ? '=== Dry-run report (no files written) ===' : '=== Replacement report ==='}`);
+  rows.forEach(({ index, mutation, stat }) => {
+    const label = mutation.selector ? `selector "${mutation.selector}"` : 'global';
+    const flag = stat.matches === 0 ? '  ⚠ no matches' : '';
+    console.log(
+      `  ${index}. [${label}] "${mutation.searchValue}" → "${mutation.replaceValue}": ` +
+      `${stat.matches} match(es) in ${stat.files.size} file(s)${flag}`
+    );
+  });
+
+  if (zeroElementRows.length > 0) {
+    console.log(`\n⚠ ${zeroElementRows.length} rule(s) had a selector that matched no elements in any .html file:`);
+    zeroElementRows.forEach(({ index, mutation }) => console.log(`  Row ${index}: selector "${mutation.selector}"`));
+  }
+  if (zeroMatchRows.length > 0) {
+    console.log(`\n⚠ ${zeroMatchRows.length} rule(s) matched elements/files but found no searchValue to replace:`);
+    zeroMatchRows.forEach(({ index, mutation }) => console.log(`  Row ${index}: "${mutation.searchValue}"`));
+  }
+  console.log('');
+}
+
 async function startReplaceProcessing() {
   try {
     await processFiles(exportDir); // Pass excluded folders from config
-    console.log('All files processed successfully.');
+    printReport();
+    console.log(isDryRun ? 'Dry run complete — no files were modified.' : 'All files processed successfully.');
   } catch (error) {
     console.error('Error during processing:', error);
   }

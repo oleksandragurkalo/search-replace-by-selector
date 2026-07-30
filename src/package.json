@@ -1,18 +1,32 @@
 {
   "name": "search-replace-by-selector",
   "version": "1.0.0",
-  "description": "",
+  "description": "CLI tool for bulk, CSS-selector-targeted find-and-replace across HTML/CSS/JS/JSON files.",
   "main": "index.js",
   "scripts": {
-    "start search-replace-by-selector": "node utils/convertExcelToJSON.js && node utils/copyFiles.js && node utils/replaceInFiles.js"
+    "start": "node utils/convertExcelToJSON.js && node utils/copyFiles.js && node utils/replaceInFiles.js",
+    "report": "node utils/convertExcelToJSON.js && node utils/copyFiles.js && node utils/replaceInFiles.js --dry-run"
   },
+  "keywords": [
+    "find-replace",
+    "css-selector",
+    "html",
+    "template-automation",
+    "cli"
+  ],
+  "author": "Oleksandra Gurkalo <oleksandra.gurkalo@gmail.com>",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/oleksandragurkalo/search-replace-by-selector.git"
+  },
+  "bugs": {
+    "url": "https://github.com/oleksandragurkalo/search-replace-by-selector/issues"
+  },
+  "homepage": "https://github.com/oleksandragurkalo/search-replace-by-selector#readme",
   "private": true,
   "dependencies": {
     "cheerio": "^1.0.0",
-    "fs-extra": "^11.2.0",
-    "path": "^0.12.7",
-    "playwright": "^1.48.2",
-    "sharp": "^0.33.5",
     "xlsx": "^0.18.5"
   }
 }
