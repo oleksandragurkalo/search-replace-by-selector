@@ -7,16 +7,9 @@ A Node.js CLI tool for bulk, selector-targeted find-and-replace across HTML/CSS/
 ## Try it online
 
 Click the badge above to open this repo in StackBlitz (runs Node.js in the browser,
-no install needed). Once it loads, run in the terminal panel:
-
-```bash
-cd src
-npm install
-npm start
-```
-
-The bundled `entry/` example files and `data/search-map.xlsx` will be processed into
-`src/export/` — open those files in the StackBlitz file tree to see the result.
+no install needed) — it auto-installs dependencies and runs `npm start`. The bundled
+`entry/` example files and `data/search-map.xlsx` are processed into `export/` — open
+those files in the StackBlitz file tree to see the result.
 
 Built to solve a common problem when maintaining many similar HTML/CSS templates:
 small updates (colours, copy, font sizes) need to be applied across dozens or hundreds
