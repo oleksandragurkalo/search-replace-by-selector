@@ -1,11 +1,27 @@
 # Search-Replace-by-Selector
 
+[![Open in StackBlitz](https://developer.stackblitz.com/img/open_in_stackblitz.svg)](https://stackblitz.com/github/oleksandragurkalo/search-replace-by-selector)
+
 A Node.js CLI tool for bulk, selector-targeted find-and-replace across HTML/CSS/JS files.
 
-Built to solve a real production problem: when maintaining 20+ pharmaceutical eDetailer
-templates, small brand updates (colours, copy, font sizes) needed to be applied across
-hundreds of files consistently and without breaking unrelated elements. A global find-replace
-was too blunt. This tool lets you target changes by CSS selector — so `h2.brand-title` gets
+## Try it online
+
+Click the badge above to open this repo in StackBlitz (runs Node.js in the browser,
+no install needed). Once it loads, run in the terminal panel:
+
+```bash
+cd src
+npm install
+npm start
+```
+
+The bundled `entry/` example files and `data/search-map.xlsx` will be processed into
+`src/export/` — open those files in the StackBlitz file tree to see the result.
+
+Built to solve a common problem when maintaining many similar HTML/CSS templates:
+small updates (colours, copy, font sizes) need to be applied across dozens or hundreds
+of files consistently, without breaking unrelated elements. A global find-replace is
+too blunt. This tool lets you target changes by CSS selector — so `h2.brand-title` gets
 one change while `h2.disclaimer` stays untouched.
 
 ## What it does
@@ -20,7 +36,8 @@ one change while `h2.disclaimer` stays untouched.
 
 ## Result
 
-Reduced per-project delivery time from ~27 hours to 6–7 hours across 30+ projects.
+Turns a tedious, error-prone round of manual multi-file edits into one command run
+against a spreadsheet you already control — with a report showing exactly what changed.
 
 ## Setup
 
@@ -36,7 +53,7 @@ Reduced per-project delivery time from ~27 hours to 6–7 hours across 30+ proje
 
 | selector | searchValue | replaceValue |
 |----------|-------------|--------------|
-| `h1.hero-title` | `Product Name` | `Kesimpta` |
+| `h1.hero-title` | `Product Name` | `Acme Widget` |
 | `.brand-color` | `#0066CC` | `#E8340A` |
 | _(empty)_ | `2023` | `2024` |
 
@@ -104,6 +121,6 @@ Node.js · no framework dependencies · Excel parsing via `xlsx` · HTML parsing
 
 ## Use case context
 
-Originally built for Veeva CRM eDetailer maintenance — multi-brand pharmaceutical
-digital content where each brand variant shares a template but requires dozens of
-targeted overrides. Generalised for any HTML/CSS project with similar bulk-update needs.
+Well suited to any workflow where multiple sites/pages share a template but each
+variant needs its own targeted overrides — multi-brand marketing sites, templated
+landing pages, white-label deployments, and similar bulk-update scenarios.
